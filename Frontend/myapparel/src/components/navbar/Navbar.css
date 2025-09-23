@@ -1,0 +1,77 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 1000;
+}
+
+
+.navbar.scrolled {
+  background: #fffffb;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+}
+
+.logo {
+  width: 160px;
+  height: 60px;
+}
+
+.logo:hover {
+  cursor: pointer;
+  border-radius: 12px 1px 12px 1px;
+}
+
+.site-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+}
+
+.nav-links li {
+  display: inline;
+}
+
+.nav-links a {
+  color: black;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.profile, .cart{
+  width: 33px;
+  height: 33px;
+  border-radius: 50%;
+  object-fit: cover;
+  padding: 1px;
+}
+
+.menu{
+   width: 33px;
+  height: 33px;
+  object-fit: cover;
+  padding: 1px;
+}
+
+.profile:hover {
+  cursor: pointer;
+}
+
+.cart:hover {
+  cursor: pointer;
+}
