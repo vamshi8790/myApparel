@@ -1,20 +1,25 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import MainLayout from "../components/layout/MainLayout";
+import { Routes, Route } from "react-router-dom";
 import Home from "../components/home/Home";
-import About from "../components/about/About";
-import Profile from "../components/profile/Profile";
+import Profile from "../pages/profile";
+import Cart from "../pages/cart";
+import PageNotFound from "../pages/pageNotFound";
+import Kids from "../pages/kids";
+import Girls from "../pages/girls";
+import Boys from "../pages/boys";
+
 
 function AppRoutes() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Home />} />
-          <Route path="about" element={<About />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/cart" element={<Cart />} />
+      <Route path="/kids" element={<Kids />} />
+      <Route path="/girls" element={<Girls />} />
+      <Route path="/boys" element={<Boys />} />"
+      <Route path="*" element={<PageNotFound />} />
+    </Routes>
+
   );
 }
 

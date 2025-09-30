@@ -1,13 +1,8 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import Navbar from "./components/navbar/Navbar";
 import Footer from "./components/footer/Footer";
-import Home from "./components/home/Home";
-import About from "./components/about/About";
-// import Cart from "./components/cart/Cart";
-// import Profile from "./components/profile/Profile";
-// import PageNotFound from "./components/pagenotfound/PageNotFound";
-
-
+import AppRoutes from "./routes/AppRoutes";
+import "./App.css";
 
 function App() {
   return (
@@ -15,10 +10,7 @@ function App() {
       <div className="layout">
         <Navbar />
         <main className="content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-          </Routes>
+          <AppRoutes />
         </main>
         <Footer />
       </div>

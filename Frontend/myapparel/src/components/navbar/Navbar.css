@@ -7,12 +7,7 @@
   justify-content: space-around;
   align-items: center;
   z-index: 1000;
-}
-
-
-.navbar.scrolled {
   background: #fffffb;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .logoContainer {
@@ -23,8 +18,8 @@
 }
 
 .logo {
-  width: 160px;
-  height: 60px;
+  width: 90px;
+  height: 80px;
 }
 
 .logo:hover {
@@ -53,7 +48,8 @@
   font-weight: 800;
 }
 
-.profile, .cart{
+.profile,
+.cart {
   width: 33px;
   height: 33px;
   border-radius: 50%;
@@ -61,17 +57,38 @@
   padding: 1px;
 }
 
-.menu{
-   width: 33px;
+.menu {
+  width: 33px;
   height: 33px;
   object-fit: cover;
   padding: 1px;
 }
 
-.profile:hover {
+.profile:hover,
+.cart:hover,
+.menu:hover {
   cursor: pointer;
 }
 
-.cart:hover {
-  cursor: pointer;
+
+.cart-icon-container {
+  position: relative;
+  display: inline-block;
+}
+
+.cart-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background-color: red;
+  color: white;
+  font-size: 15px;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 3px;
+  min-width: 15px;
+  height: 14px;
 }
