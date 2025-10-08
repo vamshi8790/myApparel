@@ -7,10 +7,10 @@ class UserBase(BaseModel):
     full_name: str | None = None
 
 class UserCreate(UserBase):
-    password: str   # plain password received from API
+    password: str
 
 class UserResponse(UserBase):
-    id: uuid.UUID   # matches DB
+    id: uuid.UUID
 
     class Config:
-        from_attributes = True  # for SQLAlchemy ORM compatibility
+        from_attributes = True

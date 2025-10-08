@@ -1,16 +1,12 @@
 from fastapi import FastAPI
 from app.core.db import engine, Base
-from app.routes import user
 from fastapi.openapi.docs import get_swagger_ui_html
 from app.routes import router as api_router
 
 
-# Create DB tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Endpoints")
-
-# Register routes
+app = FastAPI(title="MyApparel API", version="1.0.0")
 app.include_router(api_router)
 
 @app.get("/health")
@@ -20,7 +16,7 @@ def health_check():
 
 @app.get("/", include_in_schema=False)
 def overridden_swagger():
-    return get_swagger_ui_html(openapi_url="/openapi.json", title="API Docs")
+    return get_swagger_ui_html(openapi_url="/openapi.json", title="MyApparel API Docs")
 
 
 

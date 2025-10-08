@@ -69,6 +69,7 @@ function Home() {
       <section className="shop-container">
         <h1 className="shop-heading">Shop With us...</h1>
         <div className="apparels">
+
           <Link to="/boys" className="apparels-link">
             <div className="apparels-container">
               <Carousel slides={boysSlides} />
@@ -89,6 +90,7 @@ function Home() {
               <h2 className="carousel-category">Kids</h2>
             </div>
           </Link>
+          
         </div>
       </section>
     </>

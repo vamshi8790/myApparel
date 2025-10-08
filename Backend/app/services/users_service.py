@@ -50,13 +50,12 @@ def create_user(db: Session, user: UserCreate):
         username=user.username,
         email=user.email,
         full_name=user.full_name,
-        password=hash_password(user.password)  # 🔑 hash password
+        password=hash_password(user.password)
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
 
-    # Return response without password
     return UserResponse(
         id=db_user.id,
         username=db_user.username,

@@ -1,10 +1,56 @@
+import React, { useEffect, useState } from "react";
 import "./pages.css";
 
-function Girls() {
-  return <>
-  <h1 className="girls">Welcome to MyApparel Girls Page</h1>
-  <h1 className="girls">Welcome to MyApparel Girls Page</h1>
-  <h1 className="girls">Welcome to MyApparel Girls Page</h1>
-  </>
+// Define a Product interface for typing
+interface Product {
+  id: number;
+  title: string;
+  price: number;
+  category: string;
+  image: string;
 }
+
+function Girls() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    fetch("https://fakestoreapi.com/products")
+      .then((res) => res.json())
+      .then((data: Product[]) => {
+        const girlsItems = data.filter(
+          (item: Product) => item.category === "women's clothing"
+        );
+        setProducts(girlsItems);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching products:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <p className="loading-text">Loading products...</p>;
+
+  return (
+    <div className="girls-page">
+      <h1 className="page-heading">Welcome to MyApparel girls Page</h1>
+
+      <div className="products-grid">
+        {products.map((item: Product) => (
+          <div className="product-card" key={item.id}>
+            <img
+              src={item.image}
+              alt={item.title}
+              className="product-image"
+            />
+            <h3 className="product-title">{item.title}</h3>
+            <p className="product-price">${item.price}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default Girls;
