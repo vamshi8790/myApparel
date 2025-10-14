@@ -8,6 +8,8 @@
   align-items: center;
   z-index: 1000;
   background: #fffffb;
+  height: 110px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .logoContainer {
@@ -20,16 +22,13 @@
 .logo {
   width: 90px;
   height: 80px;
+  transition: all 0.3s ease;
 }
 
 .logo:hover {
   cursor: pointer;
   border-radius: 12px 1px 12px 1px;
-}
-
-.site-title {
-  font-size: 1.5rem;
-  font-weight: bold;
+  transform: scale(1.05);
 }
 
 .nav-links {
@@ -46,18 +45,15 @@
   color: black;
   text-decoration: none;
   font-weight: 800;
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #555;
 }
 
 .profile,
 .cart {
-  width: 33px;
-  height: 33px;
-  border-radius: 50%;
-  object-fit: cover;
-  padding: 1px;
-}
-
-.menu {
   width: 33px;
   height: 33px;
   object-fit: cover;
@@ -65,11 +61,10 @@
 }
 
 .profile:hover,
-.cart:hover,
-.menu:hover {
+.cart:hover {
   cursor: pointer;
+  transform: scale(1.1);
 }
-
 
 .cart-icon-container {
   position: relative;
@@ -91,4 +86,91 @@
   padding: 3px;
   min-width: 15px;
   height: 14px;
+}
+
+.main-content {
+  padding-top: 80px;
+}
+
+@media (max-width: 600px) {
+  .nav-links-container:first-of-type,
+  .nav-links-container:nth-of-type(2) li:not(:last-child) {
+    display: none;
+  }
+
+  .menu {
+    display: block;
+    width: 33px;
+    height: 33px;
+    object-fit: cover;
+    cursor: pointer;
+  }
+
+  .mobile-menu {
+    position: absolute;
+    top: 110px;
+    right: 0;
+    width: 100%;
+    background: #fffffb;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px 0;
+    animation: slideDown 0.25s ease;
+  }
+
+  .mobile-menu ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .mobile-menu-item {
+    width: 80%;
+    text-align: center;
+    background: #f4f4f4;
+    border-radius: 10px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+  }
+
+  .mobile-menu-item a {
+    text-decoration: none;
+    color: #222;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .mobile-menu .cart-icon-container {
+    position: relative;
+  }
+
+  .mobile-menu .cart-count {
+    top: -6px;
+    right: -6px;
+    font-size: 12px;
+    padding: 2px 5px;
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-10%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+@media (min-width: 601px) {
+  .menu {
+    display: none;
+  }
 }
