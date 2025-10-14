@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.db import get_db
-from app.schemas.users import UserCreate, UserResponse
+from app.schemas.users import UserCreate, UserResponse, UserUpdate
 from app.services import users_service
 
 router = APIRouter()
@@ -25,7 +25,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return users_service.create_user(db, user)
 
 @router.put("/update/{user_id}", response_model=UserResponse)
-def update_user(user_id: uuid.UUID, user: UserCreate, db: Session = Depends(get_db)):
+def update_user(user_id: uuid.UUID, user: UserUpdate, db: Session = Depends(get_db)):
     updated_user = users_service.update_user(db, user_id, user)
     if not updated_user:
         raise HTTPException(status_code=404, detail="User not found")

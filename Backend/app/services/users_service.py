@@ -1,89 +1,56 @@
 import uuid
 from sqlalchemy.orm import Session
 from app.models.users import User
-from app.schemas.users import UserCreate, UserResponse
+from app.schemas.users import UserCreate, UserResponse, UserUpdate
 from app.core.security import hash_password
 
 
 def get_users(db: Session):
-    """Retrieve all users without password"""
-    users = db.query(
-        User.id,
-        User.username,
-        User.email,
-        User.full_name
-    ).all()
-
-    return [
-        UserResponse(
-            id=u.id,
-            username=u.username,
-            email=u.email,
-            full_name=u.full_name
-        )
-        for u in users
-    ]
+    """Retrieve all users without passwords"""
+    users = db.query(User).all()
+    return [UserResponse.model_validate(u) for u in users]
 
 
 def get_user_by_id(db: Session, user_id: uuid.UUID):
-    """Retrieve a single user without password"""
-    user = db.query(
-        User.id,
-        User.username,
-        User.email,
-        User.full_name
-    ).filter(User.id == user_id).first()
-
+    """Retrieve a single user by ID"""
+    user = db.query(User).filter(User.id == user_id).first()
     if user:
-        return UserResponse(
-            id=user.id,
-            username=user.username,
-            email=user.email,
-            full_name=user.full_name
-        )
+        return UserResponse.model_validate(user)
     return None
 
 
 def create_user(db: Session, user: UserCreate):
     """Create a new user with hashed password"""
     db_user = User(
-        username=user.username,
         email=user.email,
         full_name=user.full_name,
+        phone_number=user.phone_number,
         password=hash_password(user.password)
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-
-    return UserResponse(
-        id=db_user.id,
-        username=db_user.username,
-        email=db_user.email,
-        full_name=db_user.full_name
-    )
+    return UserResponse.model_validate(db_user)
 
 
-def update_user(db: Session, user_id: uuid.UUID, user: UserCreate):
-    """Update an existing user and hash password if changed"""
+def update_user(db: Session, user_id: uuid.UUID, user_update: UserUpdate):
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         return None
 
-    db_user.username = user.username
-    db_user.email = user.email
-    db_user.full_name = user.full_name
-    db_user.password = hash_password(user.password)
+    update_data = user_update.dict(exclude_unset=True)
+
+    if "password" in update_data:
+        from app.core.security import hash_password
+        update_data["password"] = hash_password(update_data["password"])
+
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
 
     db.commit()
     db.refresh(db_user)
+    return UserResponse.model_validate(db_user)
 
-    return UserResponse(
-        id=db_user.id,
-        username=db_user.username,
-        email=db_user.email,
-        full_name=db_user.full_name
-    )
 
 
 def delete_user(db: Session, user_id: uuid.UUID):
@@ -91,7 +58,6 @@ def delete_user(db: Session, user_id: uuid.UUID):
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         return False
-
     db.delete(db_user)
     db.commit()
     return True
