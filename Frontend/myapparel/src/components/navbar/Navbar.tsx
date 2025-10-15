@@ -34,7 +34,9 @@ const Navbar: React.FC = () => {
             <li>
               <NavLink
                 to="/boys"
-                className={({ isActive }) => (isActive ? "active-link" : undefined)}
+                className={({ isActive }) =>
+                  isActive ? "active-link" : undefined
+                }
               >
                 Boys
               </NavLink>
@@ -42,7 +44,9 @@ const Navbar: React.FC = () => {
             <li>
               <NavLink
                 to="/girls"
-                className={({ isActive }) => (isActive ? "active-link" : undefined)}
+                className={({ isActive }) =>
+                  isActive ? "active-link" : undefined
+                }
               >
                 Girls
               </NavLink>
@@ -50,7 +54,9 @@ const Navbar: React.FC = () => {
             <li>
               <NavLink
                 to="/kids"
-                className={({ isActive }) => (isActive ? "active-link" : undefined)}
+                className={({ isActive }) =>
+                  isActive ? "active-link" : undefined
+                }
               >
                 Kids
               </NavLink>
@@ -69,10 +75,11 @@ const Navbar: React.FC = () => {
                 </NavLink>
               </li>
               <li>
-                <NavLink 
-                  to="/cart" 
+                <NavLink
+                  to="/cart"
                   className={({ isActive }) => {
-                    const isCartActive = isActive && location.hash !== "#orders";
+                    const isCartActive =
+                      isActive && location.hash !== "#orders";
                     return isCartActive ? "cart-link active-link" : "cart-link";
                   }}
                 >
@@ -86,12 +93,30 @@ const Navbar: React.FC = () => {
                 <NavLink
                   to="/cart#orders"
                   className={() => {
-                    const isOrdersActive = location.pathname === "/cart" && location.hash === "#orders";
+                    const isOrdersActive =
+                      location.pathname === "/cart" &&
+                      location.hash === "#orders";
                     return isOrdersActive ? "active-link" : undefined;
                   }}
                 >
                   My Orders
                 </NavLink>
+              </li>
+              <li>
+                <NavLink to="/auth" className="auth-link">
+                  Login
+                </NavLink>
+              </li>
+              <li>
+                <span
+                  className="auth-link"
+                  onClick={() => {
+                    localStorage.removeItem("token");
+                    navigate("/auth");
+                  }}
+                >
+                  Logout
+                </span>
               </li>
             </>
           )}
@@ -144,18 +169,40 @@ const Navbar: React.FC = () => {
               <NavLink
                 to="/profile"
                 onClick={() => setMenuOpen(false)}
-                className="mobile-link">
-                  <span>My Profile</span>
-                <img src={profile} alt="profile" className="profile"/>
+                className="mobile-link"
+              >
+                <span>My Profile</span>
+                <img src={profile} alt="profile" className="profile" />
               </NavLink>
-            </li>  
+            </li>
             <li className="mobile-menu-item profile-orders-group">
               <NavLink
                 to="/cart#orders"
                 onClick={() => setMenuOpen(false)}
-                className="mobile-link">
+                className="mobile-link"
+              >
                 <span>My Orders</span>
               </NavLink>
+            </li>
+            <li className="login-logout-group">
+              <NavLink
+                to="/auth"
+                onClick={() => setMenuOpen(false)}
+                className="mobile-link"
+              >
+                <span>Login</span>
+              </NavLink>
+            </li>
+            <li className="login-logout-group">
+              <span
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  setMenuOpen(false);
+                  navigate("/auth");
+                }}
+              >
+                Logout
+              </span>
             </li>
           </ul>
         </div>

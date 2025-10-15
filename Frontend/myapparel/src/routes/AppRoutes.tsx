@@ -6,6 +6,9 @@ import PageNotFound from "../pages/pageNotFound";
 import Kids from "../pages/kids";
 import Girls from "../pages/girls";
 import Boys from "../pages/boys";
+import AuthPage from "../pages/AuthPage";
+import Admin from "../components/admin/aAmin";
+
 
 
 function AppRoutes() {
@@ -16,7 +19,9 @@ function AppRoutes() {
       <Route path="/cart" element={<Cart />} />
       <Route path="/kids" element={<Kids />} />
       <Route path="/girls" element={<Girls />} />
-      <Route path="/boys" element={<Boys />} />"
+      <Route path="/boys" element={<Boys />} />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/admin" element={<Admin />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
 

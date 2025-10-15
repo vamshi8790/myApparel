@@ -164,6 +164,25 @@
     transition: all 0.3s ease;
   }
 
+.login-logout-group{
+  display: block;
+  width: 85%;
+  text-align: center;
+  background: red;
+  color: white;
+  border-radius: 10px;
+  padding: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.login-logout-group a{
+  text-decoration: none;
+  color: white;
+}
+
   .mobile-menu-item a {
     text-decoration: none;
     color: #222;
