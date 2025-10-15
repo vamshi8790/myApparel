@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import "./Navbar.css";
 import logo from "../../assets/logof.png";
 import profile from "../../assets/user.png";
@@ -9,6 +9,7 @@ import close from "../../assets/close.png";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
@@ -31,37 +32,70 @@ const Navbar: React.FC = () => {
         <div className="nav-links-container">
           <ul className="nav-links">
             <li>
-              <Link to="/boys">Boys</Link>
+              <NavLink
+                to="/boys"
+                className={({ isActive }) => (isActive ? "active-link" : undefined)}
+              >
+                Boys
+              </NavLink>
             </li>
             <li>
-              <Link to="/girls">Girls</Link>
+              <NavLink
+                to="/girls"
+                className={({ isActive }) => (isActive ? "active-link" : undefined)}
+              >
+                Girls
+              </NavLink>
             </li>
             <li>
-              <Link to="/kids">Kids</Link>
+              <NavLink
+                to="/kids"
+                className={({ isActive }) => (isActive ? "active-link" : undefined)}
+              >
+                Kids
+              </NavLink>
             </li>
           </ul>
         </div>
       )}
 
-      <div className="nav-links-container">
+      <div className="nav-links-container right-section">
         <ul className="nav-links">
           {!isMobile && (
             <>
               <li>
-                <Link to="/profile">
+                <NavLink to="/profile">
                   <img src={profile} alt="profile" className="profile" />
-                </Link>
+                </NavLink>
               </li>
               <li>
-                <Link to="/cart" className="cart-link">
+                <NavLink 
+                  to="/cart" 
+                  className={({ isActive }) => {
+                    const isCartActive = isActive && location.hash !== "#orders";
+                    return isCartActive ? "cart-link active-link" : "cart-link";
+                  }}
+                >
                   <div className="cart-icon-container">
                     <img src={bag} alt="cart" className="cart" />
                     <span className="cart-count">{0}</span>
                   </div>
-                </Link>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/cart#orders"
+                  className={() => {
+                    const isOrdersActive = location.pathname === "/cart" && location.hash === "#orders";
+                    return isOrdersActive ? "active-link" : undefined;
+                  }}
+                >
+                  My Orders
+                </NavLink>
               </li>
             </>
           )}
+
           {isMobile && (
             <li>
               <img
@@ -80,18 +114,21 @@ const Navbar: React.FC = () => {
           <ul>
             {["Boys", "Girls", "Kids"].map((category) => (
               <li key={category} className="mobile-menu-item">
-                <Link
+                <NavLink
                   to={`/${category.toLowerCase()}`}
+                  className={({ isActive }) =>
+                    isActive ? "active-link" : undefined
+                  }
                   onClick={() => setMenuOpen(false)}
                 >
                   {category}
-                </Link>
+                </NavLink>
               </li>
             ))}
 
             <li className="mobile-menu-item">
-              <Link
-                to="/cart"
+              <NavLink
+                to="/cart#cart"
                 onClick={() => setMenuOpen(false)}
                 className="mobile-link"
               >
@@ -100,18 +137,25 @@ const Navbar: React.FC = () => {
                   <img src={bag} alt="cart" className="cart" />
                   <span className="cart-count">{0}</span>
                 </div>
-              </Link>
+              </NavLink>
             </li>
 
-            <li className="mobile-menu-item">
-              <Link
+            <li className="mobile-menu-item profile-orders-group">
+              <NavLink
                 to="/profile"
                 onClick={() => setMenuOpen(false)}
-                className="mobile-link"
-              >
-                <span>My Profile</span>
-                <img src={profile} alt="profile" className="profile" />
-              </Link>
+                className="mobile-link">
+                  <span>My Profile</span>
+                <img src={profile} alt="profile" className="profile"/>
+              </NavLink>
+            </li>  
+            <li className="mobile-menu-item profile-orders-group">
+              <NavLink
+                to="/cart#orders"
+                onClick={() => setMenuOpen(false)}
+                className="mobile-link">
+                <span>My Orders</span>
+              </NavLink>
             </li>
           </ul>
         </div>

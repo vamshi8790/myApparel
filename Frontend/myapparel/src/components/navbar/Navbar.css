@@ -38,18 +38,40 @@
 }
 
 .nav-links li {
-  display: inline;
+  display: inline-flex;
+  align-items: center;
 }
 
 .nav-links a {
-  color: black;
+  font-size: 18px;
   text-decoration: none;
-  font-weight: 800;
+  color: black;
+  padding: 8px 12px;
+  position: relative;
   transition: color 0.3s ease;
 }
 
-.nav-links a:hover {
-  color: #555;
+.nav-links a:hover,
+.nav-links a.active-link {
+  color: red;
+  font-weight: 900;
+}
+
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  height: 2px;
+  background-color: red;
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+
+.nav-links a:hover::after,
+.nav-links a.active-link::after {
+  width: 100%;
 }
 
 .profile,
@@ -88,6 +110,12 @@
   height: 14px;
 }
 
+.right-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 .main-content {
   padding-top: 80px;
 }
@@ -122,13 +150,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     margin: 0;
     padding: 0;
   }
 
   .mobile-menu-item {
-    width: 80%;
+    width: 85%;
     text-align: center;
     background: #f4f4f4;
     border-radius: 10px;
@@ -143,6 +171,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
+  }
+
+  .profile-orders-group {
+    display: flex;
+    flex-direction: column;
     gap: 8px;
   }
 
