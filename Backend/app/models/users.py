@@ -11,3 +11,5 @@ class User(Base):
     full_name = Column(String, nullable=False)
     phone_number = Column(String, nullable=False)
     password = Column(String, nullable=False)
+    address = Column(String, nullable=False)
+    role = Column(String, nullable=False)

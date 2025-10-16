@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { API_ROUTES } from "../API/api";
 import "./pages.css";
-import bgImg from "../assets/homeBg.png"
 
 interface Product {
-  id: number;
-  title: string;
-  price: number;
+  id: string;
+  product_name: string;
+  cost: number;
   category: string;
-  image: string;
+  image_base64?: string;
 }
 
 interface ProductPageProps {
@@ -18,34 +19,61 @@ interface ProductPageProps {
 const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [productQuantity, setProductQuantity] = useState<{ [key: number]: number }>({});
+  const [productQuantity, setProductQuantity] = useState<{ [key: string]: number }>({});
+  const [userId] = useState<string>("b35b3075-9916-4281-ac33-bb473b386cea");
 
   useEffect(() => {
-    fetch("https://fakestoreapi.com/products")
-      .then((res) => res.json())
-      .then((data: Product[]) => {
-        const filtered = data.filter((item: Product) => item.category === category);
-        setProducts(filtered);
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get(API_ROUTES.GET_ALL_PRODUCTS);
+        const allProducts: Product[] = response.data;
 
-        const initialQuantity: { [key: number]: number } = {};
+        const filtered = allProducts.filter(
+          (item) => item.category.toLowerCase() === category.toLowerCase()
+        );
+
+        const initialQuantity: { [key: string]: number } = {};
         filtered.forEach((item) => {
           initialQuantity[item.id] = 1;
         });
-        setProductQuantity(initialQuantity);
 
+        setProducts(filtered);
+        setProductQuantity(initialQuantity);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching products:", err);
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchProducts();
   }, [category]);
 
-  const increment = (id: number) =>
+  const increment = (id: string) =>
     setProductQuantity((prev) => ({ ...prev, [id]: Math.min(prev[id] + 1, 3) }));
 
-  const decrement = (id: number) =>
+  const decrement = (id: string) =>
     setProductQuantity((prev) => ({ ...prev, [id]: Math.max(prev[id] - 1, 1) }));
+
+  const handleAddToCart = async (product: Product) => {
+    try {
+      const payload = {
+        user_id: userId,
+        product_id: product.id,
+        quantity: productQuantity[product.id],
+      };
+
+      const response = await axios.post(API_ROUTES.ADD_TO_CART, payload);
+      if (response.status === 200 || response.status === 201) {
+        alert(`${product.product_name} added to cart!`);
+      } else {
+        alert("Failed to add product to cart");
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
 
   if (loading) return <p className="loading-text">Loading products...</p>;
 
@@ -57,13 +85,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
           <div className="product-card" key={item.id}>
             <div className="product-image-wrapper">
               <img
-                src={item.image}
-                alt={item.title}
+                src={`data:image/jpeg;base64,${item.image_base64}`}
+                alt={item.product_name}
                 className="product-image"
               />
             </div>
-            <h3 className="product-title">{item.title}</h3>
-            <p className="product-price">${item.price}</p>
+            <h3 className="product-title">{item.product_name}</h3>
+            <p className="product-price">₹{item.cost}</p>
 
             <div className="quantity-selector">
               <button onClick={() => decrement(item.id)}>-</button>
@@ -71,7 +99,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
               <button onClick={() => increment(item.id)}>+</button>
             </div>
 
-            <button className="add-to-cart-btn">Add to Cart</button>
+            <button
+              className="add-to-cart-btn"
+              onClick={() => handleAddToCart(item)}
+            >
+              Add to Cart
+            </button>
           </div>
         ))}
       </div>

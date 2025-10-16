@@ -1,7 +1,7 @@
 import "./Home.css";
 import bgImg from "../../assets/landing-page.png";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import kid1 from "../../assets/kid1.png";
 import kid2 from "../../assets/kid2.png";
 import kid3 from "../../assets/kid3.png";
@@ -36,6 +36,7 @@ const Carousel = ({ slides }: { slides: Slide[] }) => {
 };
 
 function Home() {
+  const navigate = useNavigate();
   const categories = [
     {
       name: "Boys",
@@ -66,6 +67,15 @@ function Home() {
     },
   ];
 
+  const handleCategoryClick = (path: string) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate(path);
+    } else {
+      navigate("/auth");
+    }
+  };
+
   return (
     <>
       <section className="home-container">
@@ -81,12 +91,16 @@ function Home() {
         <h1 className="shop-heading">Shop With us...</h1>
         <div className="apparels">
           {categories.map((cat) => (
-            <Link key={cat.name} to={cat.path} className="apparels-link">
+            <div
+              key={cat.name}
+              className="apparels-link"
+              onClick={() => handleCategoryClick(cat.path)}
+            >
               <div className="apparels-container">
                 <Carousel slides={cat.slides} />
                 <h2 className="carousel-category">{cat.name}</h2>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </section>

@@ -7,7 +7,7 @@ import Kids from "../pages/kids";
 import Girls from "../pages/girls";
 import Boys from "../pages/boys";
 import AuthPage from "../pages/AuthPage";
-import Admin from "../components/admin/aAmin";
+import Admin from "../components/admin/Admin";
 
 
 

@@ -1,49 +1,44 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any
+from typing import List, Optional
 import uuid
 
 from app.core.db import get_db
 from app.services import orders_service
-from app.schemas.orders import OrderResponse
+from app.schemas.orders import CheckoutRequest, CheckoutResponse, UserOrderResponse, AdminOrderResponse
+from app.core.security import get_current_user
+from app.models.users import User
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
-
-class CheckoutResponse(BaseModel):
-    orders: List[OrderResponse]
-    total_amount: float
-
-
 @router.post("/checkout", response_model=CheckoutResponse)
-def checkout(cart_ids: List[uuid.UUID], db: Session = Depends(get_db)):
-    """
-    Place orders from multiple cart items at once.
-    Each product gets its own order ID.
-    Returns orders with total price per item and combined total amount.
-    """
-    orders, total_amount, error = orders_service.place_orders(db, cart_ids)
+def checkout(
+    request: CheckoutRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    orders, total_amount, error = orders_service.checkout_cart_items(db, request.cart_ids, current_user.id)
     if error:
-        raise HTTPException(status_code=404, detail=error)
-    return {"orders": orders, "total_amount": total_amount}
+        raise HTTPException(status_code=400, detail=error)
+    return CheckoutResponse(orders=orders, total_amount=total_amount, message=f"Successfully placed {len(orders)} order(s)")
 
-
-@router.get("/my-orders", response_model=List[OrderResponse])
-def get_user_orders(user_id: uuid.UUID = Query(...), db: Session = Depends(get_db)):
-    """
-    Fetch all orders placed by a specific user.
-    """
-    orders = orders_service.get_orders_by_user(db, user_id)
+@router.get("/user", response_model=List[UserOrderResponse])
+def get_user_orders(
+    product_id: Optional[uuid.UUID] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    orders = orders_service.get_user_orders_by_product(db, current_user.id, product_id)
     if not orders:
         raise HTTPException(status_code=404, detail="No orders found for this user")
     return orders
 
-
-@router.get("/all", response_model=List[OrderResponse])
-def get_all_orders(db: Session = Depends(get_db)):
-    """
-    Admin route: Fetch all orders placed by all users.
-    """
-    orders = orders_service.get_all_orders(db)
+@router.get("/admin/all", response_model=List[AdminOrderResponse])
+def get_all_orders_admin(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    orders = orders_service.get_all_orders_admin(db)
     return orders

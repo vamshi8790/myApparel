@@ -647,3 +647,25 @@
 .auth-link:active {
   transform: translateY(1px);
 }
+
+.forgot-password {
+  color: blue;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 10px;
+}
+
+.success-message {
+  color: green;
+  text-align: center;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.cancel-btn {
+  margin-top: 10px;
+  background: #ccc;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}

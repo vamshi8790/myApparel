@@ -1,21 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Response
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import List
 from app.core.db import get_db
 from app.schemas.products_schemas import ProductResponse
 from app.services import product_service
+from app.core.security import get_current_user
+from app.models.users import User
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
-@router.post("/create", response_model=ProductResponse, status_code=201)
+@router.post("/create", response_model=ProductResponse)
 async def create_product(
     product_name: str = Form(...),
     cost: float = Form(...),
     category: str = Form(...),
     quantity: int = Form(...),
     product_image: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     image_bytes = await product_image.read()
     return product_service.create_product(db, {
@@ -25,23 +28,6 @@ async def create_product(
         "quantity": quantity
     }, image_bytes)
 
-@router.get("/all", response_model=List[ProductResponse])
-def get_all_products(db: Session = Depends(get_db)):
-    return product_service.get_all_products(db)
-
-@router.get("/get/{product_id}", response_model=ProductResponse)
-def get_product_by_id(product_id: UUID, db: Session = Depends(get_db)):
-    product = product_service.get_product_by_id(db, product_id)
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return product
-
-@router.get("/image/{product_id}")
-def get_product_image(product_id: UUID, db: Session = Depends(get_db)):
-    product = db.query(product_service.Product).filter(product_service.Product.id == product_id).first()
-    if not product or not product.product_image:
-        raise HTTPException(status_code=404, detail="Image not found")
-    return Response(content=product.product_image, media_type="image/jpeg")
 
 @router.put("/update/{product_id}", response_model=ProductResponse)
 async def update_product(
@@ -51,7 +37,8 @@ async def update_product(
     category: str = Form(None),
     quantity: int = Form(None),
     product_image: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     image_bytes = await product_image.read() if product_image else None
     product_data = {k: v for k, v in {
@@ -66,9 +53,22 @@ async def update_product(
         raise HTTPException(status_code=404, detail="Product not found")
     return updated
 
+
 @router.delete("/delete/{product_id}")
-def delete_product(product_id: UUID, db: Session = Depends(get_db)):
+def delete_product(
+    product_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     deleted = product_service.delete_product(db, product_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"message": f"Product with ID {product_id} deleted successfully"}
+
+
+@router.get("/all", response_model=List[ProductResponse])
+def get_all_products(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return product_service.get_all_products(db)

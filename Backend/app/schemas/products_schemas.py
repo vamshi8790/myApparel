@@ -16,10 +16,11 @@ class ProductUpdate(BaseModel):
     cost: Optional[float] = None
     category: Optional[str] = None
     quantity: Optional[int] = None
+    product_image: Optional[bytes] = None
 
 class ProductResponse(ProductBase):
     id: UUID
-    image_url: str
+    image_base64: str
 
     class Config:
         orm_mode = True
