@@ -69,6 +69,6 @@ def delete_product(
 @router.get("/all", response_model=List[ProductResponse])
 def get_all_products(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    # current_user: User = Depends(get_current_user)
 ):
     return product_service.get_all_products(db)

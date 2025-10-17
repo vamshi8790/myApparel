@@ -22,12 +22,20 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return check_password_hash(hashed_password, plain_password)
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    """
+    Create a JWT token with the provided payload.
+    Expected keys in data: sub (email), role, id
+    """
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def verify_access_token(token: str) -> dict:
+    """
+    Verify JWT and return the payload.
+    Raises HTTPException if token is invalid or revoked.
+    """
     if token in blacklisted_tokens:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked")
     try:
@@ -39,14 +47,22 @@ def verify_access_token(token: str) -> dict:
 def revoke_token(token: str):
     blacklisted_tokens.add(token)
 
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
+    """
+    Retrieve the current user from the token.
+    Token payload now includes 'id'.
+    """
     payload = verify_access_token(token)
-    email = payload.get("sub")
-    if not email:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-    user = db.query(User).filter(User.email == email).first()
+    user_id = payload.get("id")
+
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+    
+    user = db.query(User).filter(User.id == id).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found")
+    
     return user

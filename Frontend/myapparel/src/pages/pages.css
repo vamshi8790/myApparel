@@ -623,7 +623,6 @@
   text-decoration: underline;
 }
 
-/* Make login/logout buttons identical */
 .auth-link {
   display: inline-block;
   padding: 8px 18px;
@@ -668,4 +667,11 @@
   border: none;
   padding: 5px 10px;
   cursor: pointer;
+}
+
+.error {
+  color: red;
+  font-size: 13px;
+  margin-top: -8px;
+  margin-bottom: 8px;
 }

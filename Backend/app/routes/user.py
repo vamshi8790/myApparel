@@ -18,11 +18,21 @@ def login_user(email: str = Form(...), password: str = Form(...), db: Session = 
     user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-
     access_token_expires = timedelta(hours=1)
-    access_token = create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
-
-    return {"access_token": access_token, "token_type": "bearer", "role": user.role, "user_id": str(user.id)}
+    access_token = create_access_token(
+        data={
+            "sub": user.email,
+            "role": user.role,
+            "user_id": str(user.id)
+        },
+        expires_delta=access_token_expires
+    )
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "role": user.role,
+        "user_id": str(user.id)
+    }
 
 @router.post("/logout")
 def logout_user(token: str = Depends(lambda: None)):

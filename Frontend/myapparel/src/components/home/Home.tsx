@@ -37,6 +37,7 @@ const Carousel = ({ slides }: { slides: Slide[] }) => {
 
 function Home() {
   const navigate = useNavigate();
+
   const categories = [
     {
       name: "Boys",
@@ -68,12 +69,7 @@ function Home() {
   ];
 
   const handleCategoryClick = (path: string) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      navigate(path);
-    } else {
-      navigate("/auth");
-    }
+    navigate(path);
   };
 
   return (
