@@ -9,7 +9,8 @@ interface Product {
   product_name: string;
   cost: number;
   category: string;
-  image_base64?: string;
+  quantity: number;
+  image: string;
 }
 
 interface ProductPageProps {
@@ -17,18 +18,14 @@ interface ProductPageProps {
   pageTitle: string;
 }
 
-
 function isAxiosErrorType(error: any): error is AxiosError {
   return (error as AxiosError).isAxiosError !== undefined;
 }
-
-
 
 const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [productQuantity, setProductQuantity] = useState<{ [key: string]: number }>({});
-
 
   const token = jwtService.getToken();
   const payload = jwtService.getPayload();
@@ -38,14 +35,14 @@ const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(API_ROUTES.GET_ALL_PRODUCTS);
+        const response = await axios.get(API_ROUTES.GET_ALL_PRODUCTS, {
+          headers: { Authorization: token ? `Bearer ${token}` : undefined },
+        });
 
         const allProducts: Product[] = response.data;
-
         const filtered = allProducts.filter(
           (item) => item.category.toLowerCase() === category.toLowerCase()
         );
-
         const initialQuantity: { [key: string]: number } = {};
         filtered.forEach((item) => {
           initialQuantity[item.id] = 1;
@@ -56,7 +53,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
       } catch (error) {
         if (isAxiosErrorType(error)) {
           console.error("Error fetching products:", error.message, error.response?.data);
-          if (error.response && error.response.status === 401) {
+          if (error.response?.status === 401) {
             alert("Session expired or unauthorized. Please log in again.");
           }
         } else {
@@ -124,7 +121,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
             <div className="product-card" key={item.id}>
               <div className="product-image-wrapper">
                 <img
-                  src={`data:image/jpeg;base64,${item.image_base64}`}
+                  src={`data:image/jpeg;base64,${item.image}`}
                   alt={item.product_name}
                   className="product-image"
                 />
@@ -133,17 +130,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
               <p className="product-price">₹{item.cost}</p>
 
               <div className="quantity-selector">
-                <button
-                  onClick={() => decrement(item.id)}
-                  disabled={productQuantity[item.id] <= 1}
-                >
+                <button onClick={() => decrement(item.id)} disabled={productQuantity[item.id] <= 1}>
                   -
                 </button>
                 <span>{productQuantity[item.id]}</span>
-                <button
-                  onClick={() => increment(item.id)}
-                  disabled={productQuantity[item.id] >= 3}
-                >
+                <button onClick={() => increment(item.id)} disabled={productQuantity[item.id] >= 3}>
                   +
                 </button>
               </div>

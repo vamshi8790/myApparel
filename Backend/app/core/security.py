@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.users import User
 from app.core.db import get_db
 
-SECRET_KEY = "f25fdf3b-f1c0-4be3-96f1-ddf9ea9a3bce-71268aea-6cec-4c8a-85b9-62f29b6bd52a"
+SECRET_KEY = "f25fdf3b-f1c0-4be3-96f1-ddf9ea9a3bce-71268aea-85b9-62f29b6bd52a"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -48,21 +48,40 @@ def revoke_token(token: str):
     blacklisted_tokens.add(token)
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/users/login")
+
 
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> User:
     """
     Retrieve the current user from the token.
-    Token payload now includes 'id'.
+    Token payload includes 'user_id' (from login) or 'id'.
     """
     payload = verify_access_token(token)
-    user_id = payload.get("id")
+    user_id = payload.get("user_id") or payload.get("id") 
+    email = payload.get("sub")
+    if user_id:
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                return user
+        except Exception as e:
+            print(f"Error finding user by ID: {e}")
+    if email:
+        user = db.query(User).filter(User.email == email).first()
+        if user:
+            return user
+    
+    raise HTTPException(status_code=401, detail="Invalid token payload: unable to identify user")
 
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token payload")
-    
-    user = db.query(User).filter(User.id == id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return user
+
+def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Dependency to ensure the authenticated user has the 'admin' role.
+    Raises 401 Unauthorized if the user is not an admin.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Operation restricted to administrators."
+        )
+    return current_user

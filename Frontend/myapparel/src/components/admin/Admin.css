@@ -11,9 +11,15 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  overflow-y: auto;
 }
 
 .sidebar h2 {
+  margin-top: 100px;
   text-align: center;
   margin-bottom: 30px;
 }
@@ -35,12 +41,13 @@
 
 .sidebar li:hover,
 .sidebar li.active {
-  background: #007bff;
+  background: goldenrod;
 }
 
 .main-content {
   flex: 1;
   padding: 30px;
+  margin-left: 220px;
 }
 
 .content-section h2 {
@@ -48,8 +55,6 @@
 }
 
 .category-title {
-  background: #007bff;
-  color: white;
   padding: 8px 12px;
   border-radius: 6px;
   margin-top: 25px;
@@ -59,8 +64,10 @@
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  justify-items: center;
+  align-items: start;
 }
 
 .product-card {
@@ -107,7 +114,7 @@
 }
 
 .admin-table th {
-  background: #007bff;
+  background:black;
   color: white;
 }
 
@@ -133,7 +140,7 @@
 }
 
 .add-product-form button {
-  background: #007bff;
+  background: goldenrod;
   color: white;
   border: none;
   border-radius: 6px;
@@ -142,9 +149,6 @@
   font-weight: 600;
 }
 
-.add-product-form button:hover {
-  background: #0056b3;
-}
 
 .modal-overlay {
   position: fixed;
@@ -168,7 +172,7 @@
 
 .modal-content button {
   margin-top: 15px;
-  background: #007bff;
+  background: red;
   color: white;
   border: none;
   padding: 8px 15px;
@@ -183,4 +187,60 @@
   border: 1px solid #ccc;
   border-radius: 6px;
   margin-top: 10px;
+}
+
+@media (max-width: 700px) {
+  .admin-dashboard {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: relative;
+    width: 100%;
+    flex-direction: row;
+    padding: 15px;
+    bottom: auto;
+    margin-top: 25px;
+    align-items: center;
+  }
+
+  .sidebar h2 {
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-right: 20px;
+    font-size: 1.2rem;
+  }
+
+  .sidebar ul {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .sidebar li {
+    margin-bottom: 0;
+    padding: 10px 15px;
+    white-space: nowrap;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+  }
+
+  .admin-table {
+    font-size: 0.9rem;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 8px 10px;
+  }
 }
