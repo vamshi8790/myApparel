@@ -75,9 +75,7 @@ const Navbar: React.FC = () => {
   };
 
   const handleNavigateToOrders = () => {
-    // Navigate to cart page with hash #orders
     navigate("/cart#orders");
-    // Also scroll to top for better UX (optional)
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
