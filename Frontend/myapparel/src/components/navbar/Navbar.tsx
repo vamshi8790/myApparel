@@ -7,8 +7,8 @@ import bag from "../../assets/shoppingBag.png";
 import menu from "../../assets/menu.png";
 import close from "../../assets/close.png";
 import { jwtService } from "../../services/service";
-// import { API_ROUTES } from "../../API/api";
-
+import { API_ROUTES } from "../../API/api";
+import axios from "axios";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +17,7 @@ const Navbar: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 780);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<"admin" | "user" | null>(null);
+  const [cartCount, setCartCount] = useState(0);
 
   const isAdmin = userRole === "admin";
 
@@ -30,17 +31,54 @@ const Navbar: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const handleCartUpdate = () => {
+      const updatedCount = parseInt(localStorage.getItem("cartCount") || "0");
+      setCartCount(updatedCount);
+    };
+
+    window.addEventListener("cartUpdated", handleCartUpdate);
+    return () => window.removeEventListener("cartUpdated", handleCartUpdate);
+  }, []);
+
+  useEffect(() => {
     const loggedIn = jwtService.isLoggedIn();
     const role = jwtService.getRole();
     setIsLoggedIn(loggedIn);
     setUserRole(role);
+
+    if (loggedIn && role === "user") {
+      const token = jwtService.getToken();
+      axios
+        .get(API_ROUTES.GET_CART_ITEMS, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          const items = res.data;
+          const totalCount = items.reduce(
+            (sum: number, item: any) => sum + item.quantity,
+            0
+          );
+          setCartCount(totalCount);
+          localStorage.setItem("cartCount", totalCount.toString());
+        })
+        .catch(() => setCartCount(0));
+    }
   }, [location.pathname]);
 
   const handleLogout = () => {
     jwtService.removeToken();
+    localStorage.removeItem("cartCount");
+    setCartCount(0);
     setIsLoggedIn(false);
     setUserRole(null);
     navigate("/auth");
+  };
+
+  const handleNavigateToOrders = () => {
+    // Navigate to cart page with hash #orders
+    navigate("/cart#orders");
+    // Also scroll to top for better UX (optional)
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const renderDesktopLinks = () => {
@@ -83,7 +121,8 @@ const Navbar: React.FC = () => {
               <NavLink
                 to="/admin"
                 className={({ isActive }) => (isActive ? "active-link" : undefined)}
-              style={{color:"black", textDecoration:"none"}}>
+                style={{ color: "black", textDecoration: "none" }}
+              >
                 Dash Board
               </NavLink>
               <span className="auth-link" onClick={handleLogout}>
@@ -96,23 +135,24 @@ const Navbar: React.FC = () => {
                 <NavLink
                   to="/cart"
                   className={({ isActive }) =>
-                    isActive ? "cart-link active-link" : "cart-link"
+                    isActive && location.hash !== "#orders" ? "cart-link active-link" : "cart-link"
                   }
                 >
                   <div className="cart-icon-container">
                     <img src={bag} alt="cart" className="cart" />
-                    <span className="cart-count">{0}</span>
+                    <span className="cart-count">{cartCount}</span>
                   </div>
                 </NavLink>
-                <NavLink style={{color:"black", textDecoration:"none"}}
-                  to="/cart#orders"
-                  className={() =>
-                    location.pathname === "/cart" && location.hash === "#orders"
-                      ? "active-link"
-                      : undefined}>My Orders
-                </NavLink>
+
+                <span
+                  className="my-orders-link"
+                  onClick={handleNavigateToOrders}
+                  style={{ cursor: "pointer" }}
+                >
+                  My Orders
+                </span>
               </div>
-              
+
               <NavLink to="/profile">
                 <img src={profile} alt="profile" className="profile" />
               </NavLink>
@@ -150,28 +190,29 @@ const Navbar: React.FC = () => {
               <span>Login</span>
             </NavLink>
           </li>
-        ) : isAdmin ? (<>
-          <li className="mobile-menu-item">
-            <NavLink
-              to="/admin"
-              onClick={() => setMenuOpen(false)}
-              className="mobile-link"
-            >
-              <span>Dash Board</span>
-            </NavLink>
-          </li>
-          <li className="login-logout-group">
-        <span
-          onClick={() => {
-            handleLogout();
-            setMenuOpen(false);
-          }}
-        >
-          Logout
-        </span>
-      </li>
-          
-       </> ) : (
+        ) : isAdmin ? (
+          <>
+            <li className="mobile-menu-item">
+              <NavLink
+                to="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="mobile-link"
+              >
+                <span>Dash Board</span>
+              </NavLink>
+            </li>
+            <li className="login-logout-group">
+              <span
+                onClick={() => {
+                  handleLogout();
+                  setMenuOpen(false);
+                }}
+              >
+                Logout
+              </span>
+            </li>
+          </>
+        ) : (
           <>
             <li className="mobile-menu-item">
               <NavLink
@@ -182,18 +223,21 @@ const Navbar: React.FC = () => {
                 <span>My Bag</span>
                 <div className="cart-icon-container">
                   <img src={bag} alt="cart" className="cart" />
-                  <span className="cart-count">{0}</span>
+                  <span className="cart-count">{cartCount}</span>
                 </div>
               </NavLink>
             </li>
             <li className="mobile-menu-item profile-orders-group">
-              <NavLink
-                to="/cart#orders"
-                onClick={() => setMenuOpen(false)}
+              <span
                 className="mobile-link"
+                onClick={() => {
+                  handleNavigateToOrders();
+                  setMenuOpen(false);
+                }}
+                style={{ cursor: "pointer" }}
               >
-                <span>My Orders</span>
-              </NavLink>
+                My Orders
+              </span>
             </li>
             <li className="mobile-menu-item profile-orders-group">
               <NavLink
@@ -227,10 +271,7 @@ const Navbar: React.FC = () => {
         <img src={logo} alt="logo" className="logo" />
       </div>
 
-      {!isMobile && (
-        <>{renderDesktopLinks()}</>
-      )}
-
+      {!isMobile && <>{renderDesktopLinks()}</>}
       {isMobile && (
         <div className="mobile-menu-toggle">
           <img
@@ -241,7 +282,6 @@ const Navbar: React.FC = () => {
           />
         </div>
       )}
-
       {isMobile && menuOpen && (
         <div className="mobile-menu">
           <ul>{renderMobileLinks()}</ul>

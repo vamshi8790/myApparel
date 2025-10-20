@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.models.products import Product
 from app.schemas.products_schemas import ProductResponse
 
+
 def decode_image(base64_str: str) -> bytes:
     """Convert base64 string to bytes."""
     try:

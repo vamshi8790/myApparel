@@ -1,12 +1,16 @@
 from sqlalchemy.orm import Session, joinedload
 import uuid
 from typing import List, Tuple, Optional
+import base64
 
 from app.models.cart import Cart
-from app.models.products import Product
 from app.models.orders import Order
+from app.models.products import Product
 from app.models.users import User
 from app.schemas.orders import OrderResponse, UserOrderResponse, AdminOrderResponse
+
+def bytes_to_base64(img_bytes: bytes) -> Optional[str]:
+    return base64.b64encode(img_bytes).decode("utf-8") if img_bytes else None
 
 def checkout_cart_items(db: Session, cart_ids: List[uuid.UUID], user_id: uuid.UUID) -> Tuple[List[OrderResponse], float, Optional[str]]:
     if not cart_ids:
@@ -63,7 +67,6 @@ def checkout_cart_items(db: Session, cart_ids: List[uuid.UUID], user_id: uuid.UU
         db.rollback()
         return [], 0.0, f"Error during checkout: {str(e)}"
 
-
 def get_user_orders_by_product(db: Session, user_id: uuid.UUID, product_id: Optional[uuid.UUID] = None) -> List[UserOrderResponse]:
     query = db.query(Order).options(joinedload(Order.product)).filter(Order.user_id == user_id)
     if product_id:
@@ -78,15 +81,14 @@ def get_user_orders_by_product(db: Session, user_id: uuid.UUID, product_id: Opti
             result.append(UserOrderResponse(
                 id=order.id,
                 product_id=order.product_id,
-                product_name=order.product.name,
-                product_image=getattr(order.product, "image", None),
+                product_name=order.product.product_name,
+                product_image=bytes_to_base64(order.product.product_image),
                 quantity=order.quantity,
                 cost=float(order.product.cost),
                 total_price=total_price,
                 status=order.status
             ))
     return result
-
 
 def get_all_orders_admin(db: Session) -> List[AdminOrderResponse]:
     orders = db.query(Order).options(joinedload(Order.product), joinedload(Order.user)).all()
@@ -102,8 +104,8 @@ def get_all_orders_admin(db: Session) -> List[AdminOrderResponse]:
                 user_name=getattr(order.user, "name", getattr(order.user, "username", "")),
                 user_email=order.user.email,
                 user_address=user_address,
-                product_name=order.product.name,
-                product_image=getattr(order.product, "image", None),
+                product_name=order.product.product_name,
+                product_image=bytes_to_base64(order.product.product_image),
                 cost=float(order.product.cost),
                 quantity=order.quantity,
                 total_price=total_price,
@@ -111,3 +113,28 @@ def get_all_orders_admin(db: Session) -> List[AdminOrderResponse]:
             ))
 
     return result
+
+def update_order_status(db: Session, order_id: uuid.UUID, new_status: str) -> Optional[AdminOrderResponse]:
+    order = db.query(Order).options(joinedload(Order.product), joinedload(Order.user)).filter(Order.id == order_id).first()
+    if not order:
+        return None
+
+    order.status = new_status
+    db.commit()
+    db.refresh(order)
+
+    total_price = float(order.product.cost * order.quantity) if order.product else 0.0
+    user_address = getattr(order.user, "address", None) or getattr(order.user, "shipping_address", None)
+
+    return AdminOrderResponse(
+        order_id=order.id,
+        user_name=getattr(order.user, "name", getattr(order.user, "username", "")),
+        user_email=order.user.email,
+        user_address=user_address,
+        product_name=order.product.product_name if order.product else "",
+        product_image=bytes_to_base64(order.product.product_image) if order.product else None,
+        cost=float(order.product.cost) if order.product else 0.0,
+        quantity=order.quantity,
+        total_price=total_price,
+        status=order.status
+    )

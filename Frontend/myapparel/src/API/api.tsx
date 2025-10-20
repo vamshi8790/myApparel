@@ -25,4 +25,6 @@ export const API_ROUTES = {
   CHECKOUT: `${BASE_URL}/orders/orders/checkout`,
   GET_USER_ORDERS: `${BASE_URL}/orders/orders/user`,
   GET_ALL_ORDERS: `${BASE_URL}/orders/orders/admin/all`,
+  CHANGE_ORDER_STATUS: (orderId: string) => `${BASE_URL}/orders/orders/admin/update-status/${orderId}`,
+
 };

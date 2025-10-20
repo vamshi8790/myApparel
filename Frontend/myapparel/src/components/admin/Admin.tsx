@@ -4,25 +4,82 @@ import { API_ROUTES } from "../../API/api";
 import { jwtService } from "../../services/service";
 import axios from "axios";
 
+interface OrderItem {
+  order_id: string;
+  user_name: string;
+  user_email: string;
+  user_address: string;
+  product_name: string;
+  product_image: string;
+  cost: number;
+  quantity: number;
+  total_price: number;
+  status: string;
+}
+
+interface GroupedOrder {
+  id: string;
+  customer: string;
+  address: string;
+  status: string;
+  total: number;
+  products: {
+    product_name: string;
+    image: string;
+    price: number;
+    quantity: number;
+  }[];
+}
+
+const groupOrderItems = (items: OrderItem[]): GroupedOrder[] => {
+  const grouped: { [key: string]: GroupedOrder } = {};
+
+  items.forEach(item => {
+    const orderId = item.order_id;
+    const itemTotalPrice = item.cost * item.quantity;
+
+    if (!grouped[orderId]) {
+      grouped[orderId] = {
+        id: orderId,
+        customer: item.user_name || item.user_email,
+        address: item.user_address,
+        status: item.status,
+        total: 0,
+        products: [],
+      };
+    }
+    
+    grouped[orderId].total += itemTotalPrice;
+    grouped[orderId].products.push({
+      product_name: item.product_name,
+      image: item.product_image,
+      price: item.cost,
+      quantity: item.quantity,
+    });
+    grouped[orderId].status = item.status;
+  });
+
+  return Object.values(grouped);
+};
+
 const Admin: React.FC = () => {
   const token = jwtService.getToken();
 
   const [activeTab, setActiveTab] = useState("products");
   const [products, setProducts] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-  const [filter, setFilter] = useState("All");
+  const [orders, setOrders] = useState<GroupedOrder[]>([]); 
+  const [selectedOrder, setSelectedOrder] = useState<GroupedOrder | null>(null);
 
   const [newProduct, setNewProduct] = useState({
     name: "",
     category: "",
     price: "",
     imageFile: null as File | null,
-    quantity: ""
+    quantity: "",
   });
 
   const [editProduct, setEditProduct] = useState<any | null>(null);
-
+  
   const fetchProducts = async () => {
     try {
       const res = await axios.get(API_ROUTES.GET_ALL_PRODUCTS, {
@@ -34,19 +91,27 @@ const Admin: React.FC = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(API_ROUTES.GET_ALL_ORDERS, {
+      const res = await axios.get<OrderItem[]>(API_ROUTES.GET_ALL_ORDERS, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setOrders(res.data);
+      const groupedOrders = groupOrderItems(res.data);
+      setOrders(groupedOrders);
     } catch (err) {}
   };
 
   useEffect(() => {
     fetchProducts();
-    fetchOrders();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  useEffect(() => {
+    if (activeTab === "orders") {
+      fetchOrders();
+    }
+  }, [activeTab]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value, files } = e.target as HTMLInputElement;
     if (name === "image" && files && files[0]) {
       setNewProduct({ ...newProduct, imageFile: files[0] });
@@ -55,7 +120,9 @@ const Admin: React.FC = () => {
     }
   };
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleEditChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value, files } = e.target as HTMLInputElement;
     if (name === "image" && files && files[0]) {
       setEditProduct({ ...editProduct, imageFile: files[0] });
@@ -72,7 +139,12 @@ const Admin: React.FC = () => {
 
   const addProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProduct.name || !newProduct.price || !newProduct.category || !newProduct.imageFile) {
+    if (
+      !newProduct.name ||
+      !newProduct.price ||
+      !newProduct.category ||
+      !newProduct.imageFile
+    ) {
       alert("Please fill all fields and select an image.");
       return;
     }
@@ -81,7 +153,10 @@ const Admin: React.FC = () => {
     formData.append("product_name", newProduct.name);
     formData.append("category", newProduct.category);
     formData.append("cost", newProduct.price.toString());
-    formData.append("quantity", newProduct.quantity ? newProduct.quantity.toString() : "1");
+    formData.append(
+      "quantity",
+      newProduct.quantity ? newProduct.quantity.toString() : "1"
+    );
     formData.append("product_image", newProduct.imageFile);
 
     try {
@@ -89,7 +164,13 @@ const Admin: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert("Product added successfully!");
-      setNewProduct({ name: "", category: "", price: "", imageFile: null, quantity: "" });
+      setNewProduct({
+        name: "",
+        category: "",
+        price: "",
+        imageFile: null,
+        quantity: "",
+      });
       fetchProducts();
       setActiveTab("products");
     } catch (err: any) {
@@ -103,6 +184,7 @@ const Admin: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchProducts();
+      alert("Product deleted successfully!");
     } catch (err) {}
   };
 
@@ -110,32 +192,32 @@ const Admin: React.FC = () => {
     if (!editProduct || !editProduct.id) return;
 
     try {
+      const formData = new FormData();
+      formData.append(
+        "product_name",
+        editProduct.product_name || editProduct.name
+      );
+      formData.append("category", editProduct.category);
+      formData.append(
+        "cost",
+        (editProduct.cost || editProduct.price).toString()
+      );
+      formData.append("quantity", editProduct.quantity.toString());
+
       if (editProduct.imageFile) {
-        const formData = new FormData();
-        formData.append("product_name", editProduct.product_name || editProduct.name);
-        formData.append("category", editProduct.category);
-        formData.append("cost", (editProduct.cost || editProduct.price).toString());
-        formData.append("quantity", editProduct.quantity.toString());
         formData.append("product_image", editProduct.imageFile);
-
-        await axios.put(API_ROUTES.UPDATE_PRODUCT(editProduct.id.toString()), formData, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          },
-        });
-      } else {
-        const jsonData = {
-          product_name: editProduct.product_name || editProduct.name,
-          category: editProduct.category,
-          cost: editProduct.cost || editProduct.price,
-          quantity: editProduct.quantity,
-        };
-
-        await axios.put(API_ROUTES.UPDATE_PRODUCT(editProduct.id.toString()), jsonData, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
       }
+
+      await axios.put(
+        API_ROUTES.UPDATE_PRODUCT(editProduct.id.toString()),
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       alert("Product updated successfully!");
       setEditProduct(null);
@@ -144,9 +226,9 @@ const Admin: React.FC = () => {
       let errorMsg = "Failed to update product.";
       if (err.response?.data?.detail) {
         if (Array.isArray(err.response.data.detail)) {
-          errorMsg = err.response.data.detail.map((e: any) => 
-            `${e.loc ? e.loc.join(' -> ') : 'Error'}: ${e.msg}`
-          ).join('\n');
+          errorMsg = err.response.data.detail
+            .map((e: any) => `${e.loc ? e.loc.join(" -> ") : "Error"}: ${e.msg}`)
+            .join("\n");
         } else {
           errorMsg = err.response.data.detail;
         }
@@ -155,7 +237,6 @@ const Admin: React.FC = () => {
     }
   };
 
-  const filteredOrders = filter === "All" ? orders : orders.filter((o) => o.status === filter);
   const boysProducts = products.filter((p) => p.category === "Boys Clothing");
   const girlsProducts = products.filter((p) => p.category === "Girls Clothing");
   const kidsProducts = products.filter((p) => p.category === "Kids Clothing");
@@ -165,9 +246,24 @@ const Admin: React.FC = () => {
       <aside className="sidebar">
         <h2>Admin</h2>
         <ul>
-          <li className={activeTab === "products" ? "active" : ""} onClick={() => setActiveTab("products")}>Products</li>
-          <li className={activeTab === "orders" ? "active" : ""} onClick={() => setActiveTab("orders")}>Orders</li>
-          <li className={activeTab === "add" ? "active" : ""} onClick={() => setActiveTab("add")}>Add Product</li>
+          <li
+            className={activeTab === "products" ? "active" : ""}
+            onClick={() => setActiveTab("products")}
+          >
+            Products
+          </li>
+          <li
+            className={activeTab === "orders" ? "active" : ""}
+            onClick={() => setActiveTab("orders")}
+          >
+            Orders
+          </li>
+          <li
+            className={activeTab === "add" ? "active" : ""}
+            onClick={() => setActiveTab("add")}
+          >
+            Add Product
+          </li>
         </ul>
       </aside>
 
@@ -175,28 +271,44 @@ const Admin: React.FC = () => {
         {activeTab === "products" && (
           <div className="content-section">
             <h2>Current Products</h2>
-            {[{ title: "Boys Clothing", data: boysProducts },
+            {[
+              { title: "Boys Clothing", data: boysProducts },
               { title: "Girls Clothing", data: girlsProducts },
-              { title: "Kids Clothing", data: kidsProducts }].map((cat) =>
-              cat.data.length > 0 && (
-                <div key={cat.title}>
-                  <h3 className="category-title">{cat.title}</h3>
-                  <div className="product-grid">
-                    {cat.data.map((p) => (
-                      <div className="product-card" key={p.id}>
-                        <img src={`data:image/jpeg;base64,${p.image}`} alt={p.product_name} />
-                        <h4>{p.product_name}</h4>
-                        <p>₹{p.cost}</p>
-                        <p>Qty: {p.quantity}</p>
-                        <div className="product-actions">
-                          <button className="edit-btn" onClick={() => setEditProduct(p)}>Edit</button>
-                          <button onClick={() => deleteProduct(p.id)}>Delete</button>
+              { title: "Kids Clothing", data: kidsProducts },
+            ].map(
+              (cat) =>
+                cat.data.length > 0 && (
+                  <div key={cat.title}>
+                    <h3 className="category-title">{cat.title}</h3>
+                    <div className="product-grid">
+                      {cat.data.map((p, index) => (
+                        <div
+                          className="product-card"
+                          key={p.id || `${cat.title}-${index}`}
+                        >
+                          <img
+                            src={`data:image/jpeg;base64,${p.image}`}
+                            alt={p.product_name}
+                          />
+                          <h4>{p.product_name}</h4>
+                          <p>₹{p.cost}</p>
+                          <p>Qty: {p.quantity}</p>
+                          <div className="product-actions">
+                            <button
+                              className="edit-btn"
+                              onClick={() => setEditProduct(p)}
+                            >
+                              Edit
+                            </button>
+                            <button onClick={() => deleteProduct(p.id)}>
+                              Delete
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )
+                )
             )}
           </div>
         )}
@@ -204,63 +316,117 @@ const Admin: React.FC = () => {
         {activeTab === "orders" && (
           <div className="content-section">
             <h2>All Orders</h2>
-            <div className="filter-bar">
-              <label>Filter by Status:</label>
-              <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-                <option>All</option>
-                <option>Pending</option>
-                <option>Delivered</option>
-                <option>Cancelled</option>
-              </select>
-            </div>
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Customer</th>
+                  <th>Order ID</th>
+                  <th>Customer MailId</th>
                   <th>Address</th>
                   <th>Total (₹)</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map((o) => (
-                  <tr key={o.id} onClick={() => setSelectedOrder(o)}>
-                    <td>{o.id}</td>
+                {orders.map((o, index) => (
+                  <tr
+                    key={o.id || `order-${index}`}
+                    onClick={() => setSelectedOrder(o)}
+                  >
+                    <td>{o.id.substring(0, 8)}...</td>
                     <td>{o.customer}</td>
                     <td>{o.address}</td>
-                    <td>{o.total}</td>
-                    <td>
-                      <select
-                        value={o.status}
-                        onChange={(e) =>
-                          setOrders((prev) =>
-                            prev.map((ord) =>
-                              ord.id === o.id ? { ...ord, status: e.target.value } : ord
-                            )
-                          )
-                        }
-                      >
-                        <option>Pending</option>
-                        <option>Delivered</option>
-                        <option>Cancelled</option>
-                      </select>
-                    </td>
+                    <td>{o.total.toLocaleString("en-IN")}</td>
+                    <td>{o.status}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
 
             {selectedOrder && (
-              <div className="modal-overlay" onClick={() => setSelectedOrder(null)}>
-                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="modal-overlay"
+                onClick={() => setSelectedOrder(null)}
+              >
+                <div
+                  className="modal-content"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <h3>Order Details</h3>
-                  <p><b>Order ID:</b> {selectedOrder.id}</p>
-                  <p><b>Customer:</b> {selectedOrder.customer}</p>
-                  <p><b>Address:</b> {selectedOrder.address}</p>
-                  <p><b>Products:</b> {selectedOrder.products.join(", ")}</p>
-                  <p><b>Total:</b> ₹{selectedOrder.total}</p>
-                  <p><b>Status:</b> {selectedOrder.status}</p>
+                  <p>
+                    <b>Order ID:</b> {selectedOrder.id}
+                  </p>
+                  <p>
+                    <b>Customer MailId:</b> {selectedOrder.customer}
+                  </p>
+                  <p>
+                    <b>Address:</b> {selectedOrder.address}
+                  </p>
+                  <div className="order-products">
+                    <h4>Products:</h4>
+                    {selectedOrder.products.map((p, idx: number) => (
+                      <div key={idx} className="order-product-item">
+                        <img
+                          src={`data:image/jpeg;base64,${p.image}`}
+                          alt={p.product_name}
+                        />
+                        <p>
+                          <b>Name:</b> {p.product_name}
+                        </p>
+                        <p>
+                          <b>Price:</b> ₹{p.price.toLocaleString("en-IN")}
+                        </p>
+                        <p>
+                          <b>Quantity:</b> {p.quantity}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <p>
+                    <b>Total:</b> ₹{selectedOrder.total.toLocaleString("en-IN")}
+                  </p>
+                  <p>
+                    <b>Status:</b>{" "}
+                    <select
+                      value={selectedOrder.status}
+                      onChange={(e) =>
+                        setSelectedOrder({
+                          ...selectedOrder,
+                          status: e.target.value,
+                        })
+                      }
+                    >
+                      <option>Pending</option>
+                      <option>In Transit</option>
+                      <option>Delivered</option>
+                    </select>
+                  </p>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await axios.patch(
+                          API_ROUTES.CHANGE_ORDER_STATUS(
+                            selectedOrder.id.toString()
+                          ),
+                          { status: selectedOrder.status },
+                          { headers: { Authorization: `Bearer ${token}` } }
+                        );
+                        setOrders((prev) =>
+                          prev.map((ord) =>
+                            ord.id === selectedOrder.id
+                              ? { ...ord, status: selectedOrder.status }
+                              : ord
+                          )
+                        );
+                        alert("Status updated successfully!");
+                        setSelectedOrder(null);
+                      } catch (err) {
+                        alert("Failed to update status.");
+                      }
+                    }}
+                    style={{ background: "green", color: "white" }}
+                  >
+                    Save Status
+                  </button>
                   <button onClick={() => setSelectedOrder(null)}>Close</button>
                 </div>
               </div>
@@ -272,12 +438,51 @@ const Admin: React.FC = () => {
           <div className="content-section">
             <h2>Add New Product</h2>
             <form onSubmit={addProduct} className="add-product-form">
-              <input type="text" name="name" placeholder="Product Name" value={newProduct.name} onChange={handleChange} />
-              <input type="text" name="category" placeholder="Category" value={newProduct.category} onChange={handleChange} />
-              <input type="file" name="image" accept="image/*" onChange={handleChange} />
-              {newProduct.imageFile && <img src={URL.createObjectURL(newProduct.imageFile)} alt="Preview" className="preview-img" />}
-              <input type="number" name="price" placeholder="Price" value={newProduct.price} onChange={handleChange} />
-              <input type="number" name="quantity" placeholder="Quantity" value={newProduct.quantity} onChange={handleChange} />
+              <input
+                type="text"
+                name="name"
+                placeholder="Product Name"
+                value={newProduct.name}
+                onChange={handleChange}
+              />
+              <select
+                name="category"
+                value={newProduct.category}
+                onChange={handleChange}
+              >
+                <option value="">Select Category</option>
+                <option value="Kids Clothing">Kids Clothing</option>
+                <option value="Boys Clothing">Boys Clothing</option>
+                <option value="Girls Clothing">Girls Clothing</option>
+              </select>
+
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                onChange={handleChange}
+              />
+              {newProduct.imageFile && (
+                <img
+                  src={URL.createObjectURL(newProduct.imageFile)}
+                  alt="Preview"
+                  className="preview-img"
+                />
+              )}
+              <input
+                type="number"
+                name="price"
+                placeholder="Price"
+                value={newProduct.price}
+                onChange={handleChange}
+              />
+              <input
+                type="number"
+                name="quantity"
+                placeholder="Quantity"
+                value={newProduct.quantity}
+                onChange={handleChange}
+              />
               <button type="submit">Add Product</button>
             </form>
           </div>
@@ -287,19 +492,70 @@ const Admin: React.FC = () => {
           <div className="modal-overlay" onClick={() => setEditProduct(null)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <h3>Edit Product</h3>
-              <input type="text" name="name" value={editProduct.product_name || editProduct.name} onChange={handleEditChange} placeholder="Product Name" />
-              <input type="text" name="category" value={editProduct.category} onChange={handleEditChange} placeholder="Category" />
-              <input type="number" name="price" value={editProduct.cost || editProduct.price} onChange={handleEditChange} placeholder="Price" />
-              <input type="number" name="quantity" value={editProduct.quantity} onChange={handleEditChange} placeholder="Quantity" />
-              <input type="file" name="image" accept="image/*" onChange={handleEditChange} />
+              <input
+                type="text"
+                name="name"
+                value={editProduct.product_name || editProduct.name}
+                onChange={handleEditChange}
+                placeholder="Product Name"
+              />
+              <select
+                name="category"
+                value={editProduct.category}
+                onChange={handleEditChange}
+              >
+                <option value="">Select Category</option>
+                <option value="Kids Clothing">Kids Clothing</option>
+                <option value="Boys Clothing">Boys Clothing</option>
+                <option value="Girls Clothing">Girls Clothing</option>
+              </select>
+
+              <input
+                type="number"
+                name="price"
+                value={editProduct.cost || editProduct.price}
+                onChange={handleEditChange}
+                placeholder="Price"
+              />
+              <input
+                type="number"
+                name="quantity"
+                value={editProduct.quantity}
+                onChange={handleEditChange}
+                placeholder="Quantity"
+              />
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                onChange={handleEditChange}
+              />
               {editProduct.imageFile ? (
-                <img src={URL.createObjectURL(editProduct.imageFile)} alt="Preview" className="preview-img" />
+                <img
+                  src={URL.createObjectURL(editProduct.imageFile)}
+                  alt="Preview"
+                  className="preview-img"
+                />
               ) : (
-                <img src={`data:image/jpeg;base64,${editProduct.image}`} alt="Current" className="preview-img" />
+                <img
+                  src={`data:image/jpeg;base64,${editProduct.image}`}
+                  alt="Current"
+                  className="preview-img"
+                />
               )}
               <div className="modal-buttons">
-                <button onClick={() => setEditProduct(null)} className="cancel-btn">Cancel</button>
-                <button onClick={saveEditedProduct} style={{background:"green", color:"white"}}>Save Changes</button>
+                <button
+                  onClick={() => setEditProduct(null)}
+                  className="cancel-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveEditedProduct}
+                  style={{ background: "green", color: "white" }}
+                >
+                  Save Changes
+                </button>
               </div>
             </div>
           </div>

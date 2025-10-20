@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import uuid
 
 from app.core.db import get_db
 from app.services import orders_service
-from app.schemas.orders import CheckoutRequest, CheckoutResponse, UserOrderResponse, AdminOrderResponse
-from app.core.security import get_current_user
+from app.schemas.orders import (
+    CheckoutRequest, CheckoutResponse, UserOrderResponse, AdminOrderResponse, UpdateOrderStatusRequest
+)
+from app.core.security import get_current_user, get_current_admin
 from app.models.users import User
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
@@ -42,3 +44,15 @@ def get_all_orders_admin(
         raise HTTPException(status_code=403, detail="Not authorized")
     orders = orders_service.get_all_orders_admin(db)
     return orders
+
+@router.patch("/admin/update-status/{order_id}", response_model=AdminOrderResponse)
+def update_order_status_route(
+    order_id: uuid.UUID,
+    request: UpdateOrderStatusRequest = Body(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_admin)
+):
+    updated_order = orders_service.update_order_status(db, order_id, request.status)
+    if not updated_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return updated_order

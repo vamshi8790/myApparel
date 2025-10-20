@@ -1,7 +1,12 @@
 from pydantic import BaseModel
 import uuid
 from typing import Optional, List
+class CheckoutRequest(BaseModel):
+    cart_ids: List[uuid.UUID]
+    user_id: uuid.UUID
 
+class UpdateOrderStatusRequest(BaseModel):
+    status: str
 class OrderBase(BaseModel):
     user_id: uuid.UUID
     product_id: uuid.UUID
@@ -15,10 +20,6 @@ class OrderResponse(OrderBase):
 
     class Config:
         from_attributes = True
-
-class CheckoutRequest(BaseModel):
-    cart_ids: List[uuid.UUID]
-    user_id: uuid.UUID
 
 class CheckoutResponse(BaseModel):
     orders: List[OrderResponse]

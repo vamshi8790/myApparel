@@ -40,9 +40,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
         });
 
         const allProducts: Product[] = response.data;
+
         const filtered = allProducts.filter(
-          (item) => item.category.toLowerCase() === category.toLowerCase()
+          (item) =>
+            item.category.toLowerCase() === category.toLowerCase() &&
+            item.quantity > 0
         );
+
         const initialQuantity: { [key: string]: number } = {};
         filtered.forEach((item) => {
           initialQuantity[item.id] = 1;
@@ -93,6 +97,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
 
       if (response.status === 200 || response.status === 201) {
         alert(`${product.product_name} added to cart!`);
+
+        const currentCount = parseInt(localStorage.getItem("cartCount") || "0");
+        const newCount = currentCount + productQuantity[product.id];
+        localStorage.setItem("cartCount", newCount.toString());
+        window.dispatchEvent(new Event("cartUpdated"));
       } else {
         alert("Failed to add product to cart");
       }
@@ -118,7 +127,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
           <p className="no-products-text">No products found in the {category} category.</p>
         ) : (
           products.map((item) => (
-            <div className="product-card" key={item.id}>
+            <div
+              className={`product-card ${item.quantity === 0 ? "out-of-stock" : ""}`}
+              key={item.id}
+            >
               <div className="product-image-wrapper">
                 <img
                   src={`data:image/jpeg;base64,${item.image}`}
@@ -142,9 +154,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ category, pageTitle }) => {
               <button
                 className="add-to-cart-btn"
                 onClick={() => handleAddToCart(item)}
-                disabled={!currentUserId}
+                disabled={!currentUserId || item.quantity === 0}
               >
-                {currentUserId ? "Add to Cart" : "Login to Add"}
+                {item.quantity === 0
+                  ? "Out of Stock"
+                  : currentUserId
+                  ? "Add to Cart"
+                  : "Login to Add"}
               </button>
             </div>
           ))
