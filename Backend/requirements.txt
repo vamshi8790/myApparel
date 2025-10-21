@@ -9,3 +9,9 @@ python-multipart
 pydantic[email]
 python-dotenv
 werkzeug
+requests
+streamlit
+langchain
+langchain-community
+faiss-cpu
+ollama
